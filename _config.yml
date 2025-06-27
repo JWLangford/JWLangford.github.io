@@ -9,10 +9,10 @@
 lang: en-US
 
 # Site title
-title: "Scriptor"
+title: "Jesse Langford"
 
 # A description of your site for meta tag, search engine results.
-description: "Scriptor is a minimal, clean, modern & responsive Jekyll theme for writers"
+description: "Golf Instructor Turned Software Developer"
 
 # The subpath of your site, e.g. /blog, for generating urls.
 baseurl: ""
@@ -32,22 +32,18 @@ navigation:
     url: /
   - text: About
     url: /about/
-  - text: Style Guide
-    url: /style-guide/
   - text: Tags
     url: /tags/
-  - text: Download
-    url: https://github.com/JustGoodThemes/Scriptor-Jekyll-Theme
 
 # The shortname for your Disqus site to enable comments.
 disqus: justgoodthemes
 
 # Colors
-accent_color: '#2d72d9'
+accent_color: "#2d72d9"
 
 # Site footer
 footer:
-  content: "&copy; Scriptor all rights reserved. Theme by [JustGoodThemes](https://www.justgoodthemes.com)."
+  content: ""
   has_social: true
 
 # Plugins
@@ -56,8 +52,7 @@ plugins:
 
 # http://jekyllrb.com/docs/pagination/
 paginate: 3
-paginate_path: '/page:num/'
-
+paginate_path: "/page:num/"
 
 # Permalinks
 permalink: /:title
