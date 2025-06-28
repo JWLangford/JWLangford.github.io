@@ -2,9 +2,9 @@
 layout: post
 title: "Implementing Magic Links With Go"
 date: 2025-06-13 12:00:00 +0800
-tags: []
+tags: [security, cryptography]
 description: "A graphic designer is a professional within the graphic design and graphic arts industry."
-status: in-progress
+status: completed
 ---
 
 Magic links or Email-Based One-Time Token Authentication are a common login option in todays app ecosystem.
@@ -27,13 +27,13 @@ func login(username string) error {
 		    return fmt.Errorf("something went wrong with your request, please contact support")
 	    }
 
-        token := base64.URLEncoding.EncodeToString(b)
+        token := base64.RawURLEncoding.EncodeToString(b)
 
         // set expiration to whatever suits you
         expiration := time.Minute * 15
 
         hash := sha256.Sum256([]byte(token))
-	    hashedToken := base64.URLEncoding.EncodeToString(hash[:])
+	    hashedToken := base64.RawURLEncoding.EncodeToString(hash[:])
 
         err = storeToken(user.id, hashedToken, expiration)
         if err != nil {
@@ -51,7 +51,7 @@ func login(username string) error {
 ```
 
 Once a user is found, a token is issued using the cryptographically secure pseudo-random number generator standard (CSPRNG).
-Next, a timestamp is created 15 minutes in the future, which will act as an expiration. Before the token record is stored, the token string is hashed for added security. Tokens should be stored with the hashed token as the UUID. When verification happens, the only piece of data available will be the token, so it needs to be main lookup value.
+Next, a timestamp is created 15 minutes in the future, which will act as an expiration. Before the token record is stored, the token string is hashed for added security. Tokens should be stored using the hashed token as the unique identifier or key for lookup. When verification happens, the only piece of data available will be the token, so it needs to be main lookup value.
 
 After the record is stored successfully, an email is sent to the user.
 
@@ -64,7 +64,7 @@ When issuing magic links, the same standard holds, when users provide their user
 Inside the email sent to the user, they should have a link formatted as follows: `https://your-site?token={token}`. Once a user clicks the email link, the token gets passed to your server for verification.
 
 ```go
-    verifyToken(token string) (string, error) {
+    func verifyToken(token string) (string, error) {
         hash := sha256.Sum256([]byte(token))
 	    hashedToken := base64.URLEncoding.EncodeToString(hash[:])
 
@@ -74,7 +74,7 @@ Inside the email sent to the user, they should have a link formatted as follows:
         }
 
         if time.Now().After(token.ExpiresAt) {
-            return fmt.Errorf("token expired")
+            return "", fmt.Errorf("token expired")
         }
 
         // all checks have passed, issue your authentication token
