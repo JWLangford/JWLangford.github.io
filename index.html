@@ -2,55 +2,125 @@
 layout: default
 ---
 
-<main class="main-content fadeInDown delay_075s">
+<main id="posts-container" class="main-content fadeInDown delay_075s">
+  <p>Loading your latest Medium posts...</p>
+</main>
 
-  {% for post in paginator.posts %}
-  {% if post.status != "in-progress" %}
-  <article class="post">
-    <header class="post-header">
-      <time class="post-date" datetime="{{ post.date | date: "%Y-%m-%d" }}">{{ post.date | date: "%B %-d, %Y" }}</time>
-      <h2 class="post-title"><a href="{{ site.baseurl }}{{ post.url }}" rel="bookmark">{{ post.title }}</a></h2>
-      <div class="post-meta">
-        By <span class="post-author">{{ site.data.author.name }}</span>
-        {% if post.tags.size > 0 %}
-        <span class="post-tags"> in
-          {% for tag in post.tags %}
-            <a href="{{ site.baseurl }}/tags/#{{ tag | cgi_escape }}" rel="tag">{{ tag }}</a>{% unless forloop.last %}, {% endunless %}
-          {% endfor %}
-        </span>
-        {% endif %}
-      </div><!-- .post-meta -->
-      {% if post.feature_image and post.feature_image != "" %}
-      <figure class="post-thumbnail image-card width-wide">
-        <a href="{{ site.baseurl }}{{ post.url }}"><img src="{{ post.feature_image | relative_url }}" alt="{{ post.title }}"></a>
-      </figure><!-- .post-thumbnail -->
-      {% endif %}
-    </header><!-- .post-header -->
-    <div class="post-content">
-      {% if post.content contains '<!--more-->' %}
-      {{ post.content | split: '<!--more-->' | first }}
-      <p class="read-more"><a href="{{ site.baseurl }}{{ post.url }}" class="read-more-link">Continue reading &rarr;</a></p>
-      {% else %}
-      {{ post.content }}
-      {% endif %}
-    </div><!-- .post-content -->
-  </article><!-- .post -->
-  {% endif %}
-{% endfor %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const mediumFeedUrl = 'https://medium.com/feed/@jesse-94998'; // Replace with your actual Medium username
+    const rssToJsonApi = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(mediumFeedUrl)}`;
 
-  {% if paginator.total_pages > 1 %}
-  <nav class="pagination">
-    <h2 class="screen-reader-text">Posts navigation</h2>
-    <div class="nav-links">
-      {% if paginator.previous_page %}
-      <a href="{{ paginator.previous_page_path | relative_url }}" class="newer-posts">&larr; Newer Posts</a>
-      {% endif %}
-      <span class="page-number">Page {{ paginator.page }} of {{ paginator.total_pages }}</span>
-      {% if paginator.next_page %}
-      <a href="{{ paginator.next_page_path | relative_url }}" class="older-posts">Older Posts &rarr;</a>
-      {% endif %}
-    </div>
-  </nav><!-- .pagination -->
-  {% endif %}
+    fetch(rssToJsonApi)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok ' + response.statusText);
+        }
+        return response.json();
+      })
+      .then(data => {
+        const container = document.getElementById('posts-container');
+        container.innerHTML = '';
 
-</main><!-- .site-main -->
+        data.items.unshift({
+          pubDate: "2022-04-30 16:38:08",
+          link: "https://medium.com/better-programming/the-most-important-thing-i-did-to-become-a-senior-developer-2c9aaeaa35f6",
+          title: "The Most Important Thing I Did to Become a Senior Developer",
+          description: "I won't bury the lead, the most important thing I did to become a senior developer was to own something. I don’t mean “own” like I owned a business or owned a computer. I mean I took ownership of something in the company."
+        })
+
+        if (data.items && data.items.length > 0) {
+          data.items.slice(0, 5).forEach(post => {
+
+            const article = document.createElement('article');
+            article.classList.add('post');
+
+            const header = document.createElement('header');
+            header.classList.add('post-header');
+
+            const time = document.createElement('time');
+            time.classList.add('post-date');
+            const postDate = new Date(post.pubDate);
+            time.setAttribute('datetime', postDate.toISOString().split('T')[0]);
+            time.textContent = postDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            header.appendChild(time);
+
+            const title = document.createElement('h2');
+            title.classList.add('post-title');
+            const titleLink = document.createElement('a');
+            titleLink.href = post.link;
+            titleLink.setAttribute('rel', 'bookmark');
+            titleLink.textContent = post.title;
+            titleLink.target = "_blank";
+            titleLink.rel = "noopener noreferrer";
+            title.appendChild(titleLink);
+            header.appendChild(title);
+
+            // Post Meta (Author and Tags)
+            const postMeta = document.createElement('div');
+            postMeta.classList.add('post-meta');
+            header.appendChild(postMeta);
+
+            article.appendChild(header);
+
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('post-content');
+            
+            const tempDiv = document.createElement('div');
+            const test = post.description.split("Unsplash")
+            tempDiv.innerHTML = test[1] ?? test[0];
+            const descriptionText = tempDiv.textContent || tempDiv.innerText || '';
+            
+            const excerpt = descriptionText.substring(0, 300);
+            contentDiv.innerHTML = `<p>${excerpt}...</p>`;
+
+            const readMoreP = document.createElement('p');
+            readMoreP.classList.add('read-more');
+            const readMoreLink = document.createElement('a');
+            readMoreLink.href = post.link;
+            readMoreLink.classList.add('read-more-link');
+            readMoreLink.textContent = 'Continue reading';
+            readMoreLink.target = "_blank";
+            readMoreLink.rel = "noopener noreferrer";
+            readMoreP.appendChild(readMoreLink);
+            contentDiv.appendChild(readMoreP);
+            
+            article.appendChild(contentDiv);
+
+            container.appendChild(article);
+          });
+        } else {
+          container.innerHTML = '<p>No Medium posts found or an error occurred.</p>';
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching Medium posts:', error);
+        document.getElementById('medium-posts-container').innerHTML = '<p>Failed to load Medium posts. Please try again later.</p>';
+      });
+  });
+</script>
+
+<style>
+  /* Basic styling for your Medium posts */
+  .medium-post-item {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1em;
+    margin-bottom: 1em;
+  }
+  .medium-post-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+  .medium-post-item h3 {
+    margin-top: 0;
+    margin-bottom: 0.5em;
+  }
+  .medium-post-item p {
+    font-size: 0.9em;
+    color: #555;
+  }
+  .medium-post-item small {
+    font-size: 0.8em;
+    color: #888;
+  }
+</style>
